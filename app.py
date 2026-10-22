@@ -44,11 +44,14 @@ with c3:
     st.write("")
     st.write("")
     if st.button("サンプルデータで試す"):
-        st.session_state["use_sample"] = True
+        st.session_state["use_sample"] = "ok"
+        st.session_state.pop("res", None)
+    if st.button("解けない例を試す"):
+        st.session_state["use_sample"] = "ng"
         st.session_state.pop("res", None)
 
 if uploaded is not None:
-    st.session_state["use_sample"] = False
+    st.session_state["use_sample"] = None
 
 data = None
 source = ""
@@ -56,9 +59,12 @@ try:
     if uploaded is not None:
         data = read_template(uploaded)
         source = uploaded.name
-    elif st.session_state.get("use_sample"):
+    elif st.session_state.get("use_sample") == "ok":
         data = sample_data()
         source = "サンプル(飲食店 10人×30日・早番/遅番)"
+    elif st.session_state.get("use_sample") == "ng":
+        data = sample_data(infeasible=True)
+        source = "解けない例(日曜に休み希望が集中)"
 except TemplateError as e:
     st.error(str(e))
     st.stop()

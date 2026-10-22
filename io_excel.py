@@ -241,8 +241,12 @@ def make_template(path_or_buf, staff=None, days=None, shifts=None, required=None
     wb.save(path_or_buf)
 
 
-def sample_data(seed: int = 7, n_staff: int = 10, n_days: int = 30, start: date | None = None):
-    """飲食店想定のサンプル: 10人×30日、早番・遅番。"""
+def sample_data(seed: int = 7, n_staff: int = 10, n_days: int = 30, start: date | None = None,
+                infeasible: bool = False):
+    """飲食店想定のサンプル: 10人×30日、早番・遅番。
+
+    infeasible=True のときは、わざと解けないデータ(原因表示のデモ用)にする。
+    """
     rnd = random.Random(seed)
     start = start or date(2026, 11, 1)
     days = [start + timedelta(days=i) for i in range(n_days)]
@@ -272,4 +276,12 @@ def sample_data(seed: int = 7, n_staff: int = 10, n_days: int = 30, start: date 
         rnd.shuffle(offs)
         while n_staff - len(offs) < need + 2 and offs:
             prefs[(offs.pop(), d)] = "△"
+    if infeasible:
+        # 日曜(各6人必要)に休み希望が集中する: 11/22 は5人、11/8 は6人が×
+        for d_bad, offs in ((21, range(0, 5)), (7, range(0, 6))):
+            for s in range(n_staff):
+                if s in offs:
+                    prefs[(s, d_bad)] = "×"
+                elif prefs.get((s, d_bad)) == "×":
+                    prefs[(s, d_bad)] = "△"
     return staff, days, shifts, required, prefs
